@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>GOD MODE Click Game</title>
+  <style>
+    body {
+      text-align: center;
+      font-family: Arial;
+      background: black;
+      color: white;
+      overflow: hidden;
+    }
+
+    h1 {
+      color: cyan;
+      text-shadow: 0 0 25px cyan;
+    }
+
+    .stats {
+      margin: 8px;
+    }
+
+    button {
+      padding: 20px 40px;
+      font-size: 20px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      margin: 5px;
+    }
+
+    #clickBtn {
+      background: cyan;
+      position: absolute;
+    }
+
+    .power {
+      background: purple;
+      color: white;
+    }
+
+    .particle {
+      position: absolute;
+      color: yellow;
+      font-size: 18px;
+      animation: float 1s forwards;
+    }
+
+    @keyframes float {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-120px); }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>👑 GOD MODE GAME 👑</h1>
+
+  <div class="stats">⏱️ Time: <span id="time">15</span>s</div>
+  <div class="stats">🎯 Score: <span id="score">0</span></div>
+  <div class="stats">🔥 Combo: <span id="combo">0</span></div>
+  <div class="stats">❤️ Lives: <span id="lives">3</span></div>
+  <div class="stats">🏆 High: <span id="high">0</span></div>
+
+  <br>
+  <button onclick="startGame()">Start</button>
+  <button class="power" onclick="doublePoints()">2x Score ⚡</button>
+  <button class="power" onclick="freezeTime()">Freeze ❄️</button>
+
+  <button id="clickBtn" onclick="clickGame(event)">HIT ME 🎯</button>
+
+  <script>
+    let score = 0;
+    let time = 15;
+    let combo = 0;
+    let lives = 3;
+    let gameRunning = false;
+    let lastClick = 0;
+    let multiplier = 1;
+
+    let highScore = localStorage.getItem("highScore") || 0;
+    document.getElementById("high").innerText = highScore;
+
+    function startGame() {
+      score = 0;
+      combo = 0;
+      time = 15;
+      lives = 3;
+      multiplier = 1;
+      gameRunning = true;
+
+      updateUI();
+      moveButton();
+
+      let timer = setInterval(() => {
+        if (!gameRunning) return;
+
+        time--;
+        updateUI();
+
+        if (time <= 0 || lives <= 0) {
+          clearInterval(timer);
+          gameRunning = false;
+
+          if (score > highScore) {
+            highScore = score;
+            localStorage.setItem("highScore", highScore);
+            alert("👑 NEW HIGH SCORE: " + score);
+          } else {
+            alert("Game Over! Score: " + score);
+          }
+        }
+      }, 1000);
+    }
+
+    function clickGame(e) {
+      if (!gameRunning) return;
+
+      let now = Date.now();
+
+      if (now - lastClick < 300) combo++;
+      else combo = 0;
+
+      lastClick = now;
+
+      score += (1 + combo) * multiplier;
+
+      spawnParticle(e, "+" + ((1 + combo) * multiplier));
+      moveButton();
+
+      updateUI();
+    }
+
+    function moveButton() {
+      let btn = document.getElementById("clickBtn");
+      btn.style.left = Math.random() * (window.innerWidth - 100) + "px";
+      btn.style.top = Math.random() * (window.innerHeight - 100) + "px";
+    }
+
+    function doublePoints() {
+      if (!gameRunning) return;
+      multiplier = 2;
+      setTimeout(() => multiplier = 1, 5000);
+    }
+
+    function freezeTime() {
+      if (!gameRunning) return;
+      gameRunning = false;
+      setTimeout(() => gameRunning = true, 3000);
+    }
+
+    function spawnParticle(e, text) {
+      let p = document.createElement("div");
+      p.className = "particle";
+      p.innerText = text;
+
+      p.style.left = e.clientX + "px";
+      p.style.top = e.clientY + "px";
+
+      document.body.appendChild(p);
+      setTimeout(() => p.remove(), 1000);
+    }
+
+    function updateUI() {
+      document.getElementById("score").innerText = score;
+      document.getElementById("time").innerText = time;
+      document.getElementById("combo").innerText = combo;
+      document.getElementById("lives").innerText = lives;
+      document.getElementById("high").innerText = highScore;
+    }
+
+    // Lose life if miss click
+    document.body.onclick = function(e) {
+      if (e.target.id !== "clickBtn" && gameRunning) {
+        lives--;
+        updateUI();
+      }
+    }
+  </script>
+
+</body>
+</html>
